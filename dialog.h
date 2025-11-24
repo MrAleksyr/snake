@@ -24,6 +24,8 @@ private slots:
 
     void on_checkBox_toggled(bool checked);
 
+    void startOperations();
+
     void on_pushButton_clicked();
 
     void on_pushButton_2_clicked();

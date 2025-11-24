@@ -9,8 +9,10 @@ extern bool need_timer;
 extern bool need_apple;
 extern bool needplay;
 
+int secmer = 0;
 int seconds_to_loose = 20;
 int snakeLong = 1;
+int howManyApple = 0;
 bool timer_start = 0;
 const int mapSize = 100;
 int map[mapSize];
@@ -32,7 +34,12 @@ void MainWindow::startOperations(){
     seconds_to_loose = sec_to_loose_glob;
     timer_start = !need_timer;
 
-
+    if(!need_timer){
+        ui->label_101->hide();
+    }
+    if(!need_apple){
+        ui->label_102->hide();
+    }
 
 
     QString temp = "Time to loose: ";
@@ -40,6 +47,16 @@ void MainWindow::startOperations(){
     temp+=temp_s;
     QLabel* label;
     QString buttonName = QString("label_101");
+    label = findChild<QLabel*>(buttonName);
+    if(label){
+        label->setText(temp);
+    }else QMessageBox::information(nullptr, "ERROR", "LABEL NOT FOUND");
+
+
+    temp = "Apple to win: ";
+    temp_s = QString::number(howManyApple);
+    temp = temp + temp_s + "/" + QString::number(apple_to_win_glob);
+    buttonName = QString("label_102");
     label = findChild<QLabel*>(buttonName);
     if(label){
         label->setText(temp);
@@ -86,6 +103,7 @@ void MainWindow::slotTimerAlarm()
         QString temp_s = QString::number(seconds_to_loose);
         temp+=temp_s;
         ui->label_101->setText(temp);
+        secmer++;
     }
     else {
         QMessageBox::information(nullptr, "LOSE", "LOOOOOOOSE");
@@ -172,10 +190,25 @@ void MainWindow::keyPressEvent(QKeyEvent *e)
             label->setText(temp);
         }else QMessageBox::information(nullptr, "ERROR", "LABEL NOT FOUND");
         seconds_to_loose+=10;
+        howManyApple++;
+
+        if(need_apple){
+        temp = "Apple to win: ";
+        temp_s = QString::number(howManyApple);
+        temp = temp + temp_s + "/" + QString::number(apple_to_win_glob);
+        buttonName = QString("label_102");
+        label = findChild<QLabel*>(buttonName);
+        if(label){
+            label->setText(temp);
+        }else QMessageBox::information(nullptr, "ERROR", "LABEL NOT FOUND");
+        }
     }
     reRender();
-    if(snakeLong>100){
-        QMessageBox::information(nullptr, "WIN", "WINWINWINWINWIN");
+    if((snakeLong>100)||(howManyApple>=apple_to_win_glob)){
+        if(need_timer)
+            QMessageBox::information(nullptr, "WIN", "WINWINWINWINWIN\n time: " + QString::number(secmer) + " sec");
+        else
+            QMessageBox::information(nullptr, "WIN", "WINWINWINWINWIN");
         QApplication::quit();
     }
     if(boom){
