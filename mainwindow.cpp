@@ -9,7 +9,7 @@ extern bool need_timer;
 extern bool need_apple;
 extern bool needplay;
 
-
+bool end = 0;
 int lastDir = 0;
 int secmer = 0;
 int seconds_to_loose = 20;
@@ -226,17 +226,17 @@ void MainWindow::keyPressEvent(QKeyEvent *e)
         }
     }
     reRender();
-    if ((snakeLong > 100) || ((howManyApple >= apple_to_win_glob)&&(need_apple))) {
+    if ((!end)&&(snakeLong > 100) || ((howManyApple >= apple_to_win_glob)&&(need_apple)&&(!end))) {
         if (need_timer)
-
+        {end = 1;
             QMessageBox::information(nullptr,
                                      "WIN",
                                      "WINWINWINWINWIN\n time: " + QString::number(secmer) + " sec");
-        else
+        }else
             QMessageBox::information(nullptr, "WIN", "WINWINWINWINWIN");
         QApplication::quit();
     }
-    if (boom) {
+    if (boom) {end = 1;
         QMessageBox::information(nullptr, "LOSE", "LOOOOOOOSE");
         QApplication::quit();
     }
