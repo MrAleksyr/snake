@@ -1,10 +1,10 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
 #include <QKeyEvent>
-#include <QTimer>
+#include <QMainWindow>
 #include <QTime>
+#include <QTimer>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -31,9 +31,9 @@ private slots:
 
     void slotTimerAlarm();
 
-
 protected:
     void keyPressEvent(QKeyEvent *e) override;
+
 private:
     Ui::MainWindow *ui;
     Dialog *dialog;

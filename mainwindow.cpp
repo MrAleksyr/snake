@@ -1,6 +1,6 @@
 #include "mainwindow.h"
-#include "./ui_mainwindow.h"
 #include <QMessageBox>
+#include "./ui_mainwindow.h"
 #include "dialog.h"
 
 extern int sec_to_loose_glob;
@@ -9,6 +9,8 @@ extern bool need_timer;
 extern bool need_apple;
 extern bool needplay;
 
+
+int lastDir = 0;
 int secmer = 0;
 int seconds_to_loose = 20;
 int snakeLong = 1;
@@ -18,217 +20,237 @@ const int mapSize = 100;
 int map[mapSize];
 unsigned int headpos = 45;
 int applepos = 5;
-void MainWindow::startOperations(){
-    for(int i = 0; i < mapSize; i++){
+void MainWindow::startOperations()
+{
+    for (int i = 0; i < mapSize; i++) {
         map[i] = 0;
     }
-    map[headpos-1] = 1;
+    map[headpos - 1] = 1;
     map[applepos - 1] = -1;
 
     hide();
-    if(!dialog){
+    if (!dialog) {
         dialog = new Dialog(this);
     }
     //dialog->setAttribute(Qt::WA_DeleteOnClose);
     dialog->exec();
     seconds_to_loose = sec_to_loose_glob;
-    timer_start = !need_timer;
+    //timer_start = !need_timer;
 
-    if(!need_timer){
+    if (!need_timer) {
         ui->label_101->hide();
     }
-    if(!need_apple){
+    if (!need_apple) {
         ui->label_102->hide();
     }
 
-
     QString temp = "Time to loose: ";
     QString temp_s = QString::number(seconds_to_loose);
-    temp+=temp_s;
-    QLabel* label;
+    temp += temp_s;
+    QLabel *label;
     QString buttonName = QString("label_101");
-    label = findChild<QLabel*>(buttonName);
-    if(label){
+    label = findChild<QLabel *>(buttonName);
+    if (label) {
         label->setText(temp);
-    }else QMessageBox::information(nullptr, "ERROR", "LABEL NOT FOUND");
-
+    } else
+        QMessageBox::information(nullptr, "ERROR", "LABEL NOT FOUND");
 
     temp = "Apple to win: ";
     temp_s = QString::number(howManyApple);
     temp = temp + temp_s + "/" + QString::number(apple_to_win_glob);
     buttonName = QString("label_102");
-    label = findChild<QLabel*>(buttonName);
-    if(label){
+    label = findChild<QLabel *>(buttonName);
+    if (label) {
         label->setText(temp);
-    }else QMessageBox::information(nullptr, "ERROR", "LABEL NOT FOUND");
-
+    } else
+        QMessageBox::information(nullptr, "ERROR", "LABEL NOT FOUND");
 }
 
-void MainWindow::reRender(){
-    QLabel* label;
-    for(int indexpos = 1; indexpos < mapSize+1; indexpos++){
-        if(indexpos!=1){
+void MainWindow::reRender()
+{
+    QLabel *label;
+    for (int indexpos = 1; indexpos < mapSize + 1; indexpos++) {
+        if (indexpos != 1) {
             QString buttonName = QString("label_%1").arg(indexpos);
-            label = findChild<QLabel*>(buttonName);
+            label = findChild<QLabel *>(buttonName);
         } else {
             QString buttonName = QString("label");
-            label = findChild<QLabel*>(buttonName);
+            label = findChild<QLabel *>(buttonName);
         }
-        if(label){
-            if(map[indexpos-1]==-1){label->setText("A");}
-            else if(map[indexpos-1]==0){label->setText(" ");}
-            else if(map[indexpos-1]==1){label->setText("O");}
-            else if(map[indexpos-1]>1){
-                map[indexpos-1]++;
-                if(map[indexpos-1]<=snakeLong+1)
-                {
+        if (label) {
+            if (map[indexpos - 1] == -1) {
+                label->setText("A");
+            } else if (map[indexpos - 1] == 0) {
+                label->setText(" ");
+            } else if (map[indexpos - 1] == 1) {
+                label->setText("O");
+            } else if (map[indexpos - 1] > 1) {
+                map[indexpos - 1]++;
+                if (map[indexpos - 1] <= snakeLong + 1) {
                     label->setText("o");
 
-                }
-                else label->setText(" ");
+                } else
+                    label->setText(" ");
             }
 
-        } else QMessageBox::information(nullptr, "ERROR", "LABEL NOT FOUND");
+        } else
+            QMessageBox::information(nullptr, "ERROR", "LABEL NOT FOUND");
     }
-
-
 }
 
 void MainWindow::slotTimerAlarm()
 {
 
-    if(seconds_to_loose>0){
+    if(need_timer){if (seconds_to_loose > 0) {
         seconds_to_loose--;
         QString temp = "Time to loose: ";
         QString temp_s = QString::number(seconds_to_loose);
-        temp+=temp_s;
+        temp += temp_s;
         ui->label_101->setText(temp);
         secmer++;
-    }
-    else {
+    } else {
         QMessageBox::information(nullptr, "LOSE", "LOOOOOOOSE");
         QApplication::quit();
     }
     //ui->label_101->setText(QTime::currentTime().toString("hh:mm:ss"));
-}
+    }
 
+    Qt::Key ab = Qt::Key_F;
+    if (lastDir == 1) {
+        ab = Qt::Key_W;
+    } else if (lastDir == 2) {
+        ab = Qt::Key_D;
+    } else if (lastDir == 3) {
+        ab = Qt::Key_S;
+    } else if (lastDir == 4) {
+        ab = Qt::Key_A;
+    }
+    QKeyEvent *event = new QKeyEvent(QEvent::KeyPress,ab,Qt::NoModifier);
+    QApplication::postEvent(this, event);
+
+}
 void MainWindow::keyPressEvent(QKeyEvent *e)
 {
     bool boom = 0;
-    if(!timer_start){
+    if (!timer_start) {
         timer = new QTimer();
         connect(timer, SIGNAL(timeout()), this, SLOT(slotTimerAlarm()));
         timer->start(1000);
         timer_start = 1;
     }
-    if(e->key()==Qt::Key_W) {
-        if(headpos>10){
-            map[headpos-1]++;
-            headpos-=10;
-            if((map[headpos-1]<=snakeLong+1)&&(map[headpos-1]>0)){boom=1;}
-            map[headpos-1] = 1;
-        }
-        else return;
-    }
-    else if(e->key()==Qt::Key_D) {
-        if((headpos-1)%10<9){
-            map[headpos-1]++;
-            headpos+=1;
-            if((map[headpos-1]<=snakeLong+1)&&(map[headpos-1]>0)){boom=1;}
-            map[headpos-1] = 1;
-        }
-        else return;
-    }
-    else if(e->key()==Qt::Key_S) {
-        if(headpos<=90){
-            map[headpos-1]++;
-            headpos+=10;
-            if((map[headpos-1]<=snakeLong+1)&&(map[headpos-1]>0)){boom=1;}
-            map[headpos-1] = 1;
-        }
-        else return;
-    }
-    else if(e->key()==Qt::Key_A) {
-        if((headpos-1)%10>0){
-            map[headpos-1]++;
-            headpos-=1;
-            if((map[headpos-1]<=snakeLong+1)&&(map[headpos-1]>0)){boom=1;}
-            map[headpos-1] = 1;
-        }
-        else return;
-    }
-    else if(e->key()==Qt::Key_F4){
+    if (e->key() == Qt::Key_W) {
+        if (headpos > 10) {
+            map[headpos - 1]++;
+            headpos -= 10;
+            if ((map[headpos - 1] <= snakeLong + 1) && (map[headpos - 1] > 0)) {
+                boom = 1;
+            }
+            map[headpos - 1] = 1;
+            lastDir = 1;
+        } else
+            return;
+    } else if (e->key() == Qt::Key_D) {
+        if ((headpos - 1) % 10 < 9) {
+            map[headpos - 1]++;
+            headpos += 1;
+            if ((map[headpos - 1] <= snakeLong + 1) && (map[headpos - 1] > 0)) {
+                boom = 1;
+            }
+            map[headpos - 1] = 1;lastDir = 2;
+        } else
+            return;
+    } else if (e->key() == Qt::Key_S) {
+        if (headpos <= 90) {
+            map[headpos - 1]++;
+            headpos += 10;
+            if ((map[headpos - 1] <= snakeLong + 1) && (map[headpos - 1] > 0)) {
+                boom = 1;
+            }
+            map[headpos - 1] = 1;lastDir = 3;
+        } else
+            return;
+    } else if (e->key() == Qt::Key_A) {
+        if ((headpos - 1) % 10 > 0) {
+            map[headpos - 1]++;
+            headpos -= 1;
+            if ((map[headpos - 1] <= snakeLong + 1) && (map[headpos - 1] > 0)) {
+                boom = 1;
+            }
+            map[headpos - 1] = 1;lastDir = 4;
+        } else
+            return;
+    } else if (e->key() == Qt::Key_F4) {
         int temppos = 0;
         srand(time(0));
 
-        while((temppos==0)||((map[temppos-1]<snakeLong)&&(map[temppos-1]!=0)))  {
-            temppos = (rand()%101)+1;
+        while ((temppos == 0) || ((map[temppos - 1] < snakeLong) && (map[temppos - 1] != 0))) {
+            temppos = (rand() % 101) + 1;
         }
         applepos = temppos;
-        map[applepos-1] = -1;
-
-
+        map[applepos - 1] = -1;
     }
-    if(headpos == applepos){
-        snakeLong +=1;
+    if (headpos == applepos) {
+        snakeLong += 1;
         int temppos = 0;
         srand(time(0));
-        while((temppos==0)||((map[temppos-1]<snakeLong)&&(map[temppos-1]!=0)))  {
-            temppos = (rand()%100)+1;
+        while ((temppos == 0) || ((map[temppos - 1] < snakeLong) && (map[temppos - 1] != 0))) {
+            temppos = (rand() % 100) + 1;
         }
         applepos = temppos;
-        map[applepos-1] = -1;
+        map[applepos - 1] = -1;
 
         QString temp = "Time to loose: ";
         QString temp_s = QString::number(seconds_to_loose);
-        temp+=temp_s;
-        temp+=" + 10 sec";
-        QLabel* label;
+        temp += temp_s;
+        temp += " + 10 sec";
+        QLabel *label;
         QString buttonName = QString("label_101");
-        label = findChild<QLabel*>(buttonName);
-        if(label){
+        label = findChild<QLabel *>(buttonName);
+        if (label) {
             label->setText(temp);
-        }else QMessageBox::information(nullptr, "ERROR", "LABEL NOT FOUND");
-        seconds_to_loose+=10;
+        } else
+            QMessageBox::information(nullptr, "ERROR", "LABEL NOT FOUND");
+        seconds_to_loose += 10;
         howManyApple++;
 
-        if(need_apple){
-        temp = "Apple to win: ";
-        temp_s = QString::number(howManyApple);
-        temp = temp + temp_s + "/" + QString::number(apple_to_win_glob);
-        buttonName = QString("label_102");
-        label = findChild<QLabel*>(buttonName);
-        if(label){
-            label->setText(temp);
-        }else QMessageBox::information(nullptr, "ERROR", "LABEL NOT FOUND");
+        if (need_apple) {
+            temp = "Apple to win: ";
+            temp_s = QString::number(howManyApple);
+            temp = temp + temp_s + "/" + QString::number(apple_to_win_glob);
+            buttonName = QString("label_102");
+            label = findChild<QLabel *>(buttonName);
+            if (label) {
+                label->setText(temp);
+            } else
+                QMessageBox::information(nullptr, "ERROR", "LABEL NOT FOUND");
         }
     }
     reRender();
-    if((snakeLong>100)||(howManyApple>=apple_to_win_glob)){
-        if(need_timer)
-            QMessageBox::information(nullptr, "WIN", "WINWINWINWINWIN\n time: " + QString::number(secmer) + " sec");
+    if ((snakeLong > 100) || ((howManyApple >= apple_to_win_glob)&&(need_apple))) {
+        if (need_timer)
+
+            QMessageBox::information(nullptr,
+                                     "WIN",
+                                     "WINWINWINWINWIN\n time: " + QString::number(secmer) + " sec");
         else
             QMessageBox::information(nullptr, "WIN", "WINWINWINWINWIN");
         QApplication::quit();
     }
-    if(boom){
+    if (boom) {
         QMessageBox::information(nullptr, "LOSE", "LOOOOOOOSE");
         QApplication::quit();
     }
-
 }
-
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow),
-    dialog(nullptr)
+    , ui(new Ui::MainWindow)
+    , dialog(nullptr)
 {
     ui->setupUi(this);
     startOperations();
     reRender();
     //ui->label_101->setText(QTime::currentTime().toString("hh:mm:ss"));
-
 }
 
 MainWindow::~MainWindow()
@@ -236,8 +258,6 @@ MainWindow::~MainWindow()
     delete ui;
     delete dialog;
 }
-
-
 
 void MainWindow::on_pushButton_clicked()
 {
@@ -247,4 +267,3 @@ void MainWindow::on_pushButton_clicked()
     timer->start(1000);
 */
 }
-
